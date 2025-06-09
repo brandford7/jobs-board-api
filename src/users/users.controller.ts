@@ -8,10 +8,11 @@ import {
   Delete,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { AuthenticatedUser, Roles } from 'nest-keycloak-connect';
 //import { CreateUserDto } from './dto/create-user.dto';
 //import { UpdateUserDto } from './dto/update-user.dto';
 
-@Controller('users')
+@Controller('/api/users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -21,15 +22,15 @@ export class UsersController {
   }*/
 
   @Get()
-  findAll() {
+  @Roles({ roles: ['realm:admin'] }) // Only admins can list users
+  async getAllUsers() {
     return this.usersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  @Get('/me')
+  async getMe(@AuthenticatedUser() user: any) {
+    return this.usersService.findUser(user);
   }
-
   /*
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {

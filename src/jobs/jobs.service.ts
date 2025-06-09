@@ -36,7 +36,7 @@ export class JobsService {
 
     const data = await qb.skip(offset).take(limit).getMany();
 
-    return { data, meta: { total, limit, offset } };
+    return { data, meta: { total, offset, limit } };
   }
 
   async findOne(id: string): Promise<Job> {

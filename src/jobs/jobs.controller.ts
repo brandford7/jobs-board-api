@@ -34,6 +34,7 @@ export class JobsController {
   }
 
   @Get(':id')
+  @Roles({ roles: ['realm:candidate'] })
   findOne(@Param('id') id: string) {
     return this.jobsService.findOne(id);
   }
