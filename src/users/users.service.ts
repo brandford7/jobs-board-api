@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { createQueryBuilder, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { UserQueryDTO } from './dto/user-query-dto';
+import { KeycloakUser } from 'src/auth/keycloak.user.interface';
 //import { CreateUserDto } from './dto/create-user.dto';
 //import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -20,24 +21,53 @@ export class UsersService {
     data: User[];
     meta: { total: number; offset: number; limit: number };
   }> {
-    const { search, offset = 0, limit = 10 } = query;
+    const {
+      search,
+      order = 'ASC',
+      sortBy = 'createdAt',
+      createdBefore,
+      createdAfter,
+      role,
+      offset = 0,
+      limit = 10,
+    } = query;
 
     const qb = this.userRepo.createQueryBuilder('user');
 
+    // Search by name fields
     if (search) {
-      qb.andWhere('LOWER(job.title) LIKE LOWER(:search)', {
-        search: `%${search}%`,
-      });
+      qb.andWhere(
+        '(LOWER(user.firstname) LIKE LOWER(:search) OR LOWER(user.lastname) LIKE LOWER(:search) OR LOWER(user.username) LIKE LOWER(:search))',
+        { search: `%${search}%` },
+      );
     }
 
-    const total = await qb.getCount();
+    // Filter by role
+    if (role) {
+      qb.andWhere('user.role = :role', { role });
+    }
 
-    const data = await qb.skip(offset).take(limit).getMany();
+    // Filter by date range
+    if (createdAfter) {
+      qb.andWhere('user.createdAt >= :createdAfter', { createdAfter });
+    }
+
+    if (createdBefore) {
+      qb.andWhere('user.createdAt <= :createdBefore', { createdBefore });
+    }
+
+    // Sorting
+    qb.orderBy(`user.${sortBy}`, order);
+
+    //pagination
+    qb.skip(offset).take(limit);
+
+    const [data, total] = await qb.getManyAndCount();
 
     return { data, meta: { total, offset, limit } };
   }
 
-  async findUser(kcUser: any): Promise<User> {
+  async findUser(kcUser: KeycloakUser): Promise<User> {
     const keycloakId = kcUser.sub;
 
     // Try to find the user in the DB

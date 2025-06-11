@@ -6,9 +6,11 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { AuthenticatedUser, Roles } from 'nest-keycloak-connect';
+import { UserQueryDTO } from './dto/user-query-dto';
 //import { CreateUserDto } from './dto/create-user.dto';
 //import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -23,8 +25,8 @@ export class UsersController {
 
   @Get()
   @Roles({ roles: ['realm:admin'] }) // Only admins can list users
-  async getAllUsers() {
-    return this.usersService.findAll();
+  async getAllUsers(@Query() query: UserQueryDTO) {
+    return this.usersService.findAll(query);
   }
 
   @Get('/me')

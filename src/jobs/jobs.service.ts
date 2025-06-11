@@ -5,36 +5,89 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Job } from './entities/job.entity';
 import { JobQueryDTO } from './dto/job-query-dto';
+import { User } from 'src/users/entities/user.entity';
+import { KeycloakUser } from 'src/auth/keycloak.user.interface';
 
 @Injectable()
 export class JobsService {
   constructor(
     @InjectRepository(Job)
     private readonly jobRepo: Repository<Job>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
 
-  async create(createJobDto: CreateJobDto): Promise<Job> {
-    //const jobExists = await this.jobRepo.find({ where: { id } });
-    const job = this.jobRepo.create(createJobDto);
+  async create(createJobDto: CreateJobDto, user: KeycloakUser): Promise<Job> {
+    const currentUser = await this.userRepo.findOneBy({
+      keycloakId: user.sub,
+    });
+
+    if (!currentUser) throw new NotFoundException('User not found');
+
+    const job = this.jobRepo.create({
+      ...createJobDto,
+      createdBy: currentUser,
+    });
 
     return this.jobRepo.save(job);
   }
 
   async findAll(query: JobQueryDTO): Promise<{
     data: Job[];
-    meta: { offset: number; limit: number; total: number };
+    meta: { total: number; offset: number; limit: number };
   }> {
-    const { search, status, sort, offset = 0, limit = 10 } = query;
+    const {
+      search,
+      type,
+      location,
+      minSalary,
+      maxSalary,
+      createdAfter,
+      createdBefore,
+      sortBy = 'createdAt',
+      order = 'DESC',
+      offset = 0,
+      limit = 10,
+    } = query;
+
     const qb = this.jobRepo.createQueryBuilder('job');
 
+    // Search across title and description
     if (search) {
-      qb.andWhere('LOWER(job.title) LIKE LOWER(:search)', {
-        search: `%${search}%`,
-      });
+      qb.andWhere(
+        '(LOWER(job.title) LIKE LOWER(:search) OR LOWER(job.description) LIKE LOWER(:search))',
+        { search: `%${search}%` },
+      );
     }
-    const total = await qb.getCount();
 
-    const data = await qb.skip(offset).take(limit).getMany();
+    if (type) {
+      qb.andWhere('job.type = :type', { type });
+    }
+
+    if (location) {
+      qb.andWhere('job.location = :location', { location });
+    }
+
+    if (minSalary) {
+      qb.andWhere('job.salary >= :minSalary', { minSalary });
+    }
+
+    if (maxSalary) {
+      qb.andWhere('job.salary <= :maxSalary', { maxSalary });
+    }
+
+    if (createdAfter) {
+      qb.andWhere('job.createdAt >= :createdAfter', { createdAfter });
+    }
+
+    if (createdBefore) {
+      qb.andWhere('job.createdAt <= :createdBefore', { createdBefore });
+    }
+
+    qb.orderBy(`job.${sortBy}`, order).skip(offset).take(limit);
+
+    const total = await qb.getCount();
+    const data = await qb.getMany();
 
     return { data, meta: { total, offset, limit } };
   }
@@ -49,21 +102,32 @@ export class JobsService {
   }
 
   async update(id: string, updateJobDto: UpdateJobDto): Promise<Job> {
-    const job = await this.findOne(id);
+    const job = await this.jobRepo.findOne({
+      where: { id },
+      relations: ['createdBy'],
+    });
 
     if (!job) {
       throw new NotFoundException(`job with id ${id} does not exist `);
     }
+
     Object.assign(job, updateJobDto);
     return await this.jobRepo.save(job);
   }
 
-  async remove(id: string): Promise<string> {
-    const job = await this.findOne(id);
+  async remove(id: string /*user: KeycloakUser*/): Promise<string> {
+    const job = await this.jobRepo.findOne({
+      where: { id },
+      relations: ['createdBy'],
+    });
 
     if (!job) {
       throw new NotFoundException(`job with id ${id} does not exist `);
     }
+    /* if (job.createdBy.keycloakId !== user.sub && !user.isAdmin) {
+      throw new ForbiddenException('You are not allowed to delete this job');
+    }
+*/
     await this.jobRepo.remove(job);
     return id;
   }

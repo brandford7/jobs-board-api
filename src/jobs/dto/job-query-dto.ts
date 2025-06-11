@@ -1,23 +1,54 @@
-import { IsInt, IsOptional, IsString } from 'class-validator';
+// job-query.dto.ts
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsIn,
+  IsDateString,
+} from 'class-validator';
 
 export class JobQueryDTO {
-  @IsString()
   @IsOptional()
+  @IsString()
   search?: string;
 
+  @IsOptional()
   @IsString()
-  @IsOptional()
-  status?: string;
+  type?: string;
 
+  @IsOptional()
   @IsString()
-  @IsOptional()
-  sort?: string;
+  location?: string;
 
-  @IsInt()
   @IsOptional()
-  limit?: number;
+  @IsNumber()
+  minSalary?: number;
 
-  @IsInt()
   @IsOptional()
+  @IsNumber()
+  maxSalary?: number;
+
+  @IsOptional()
+  @IsDateString()
+  createdAfter?: string;
+
+  @IsOptional()
+  @IsDateString()
+  createdBefore?: string;
+
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @IsOptional()
+  @IsIn(['ASC', 'DESC'])
+  order?: 'ASC' | 'DESC';
+
+  @IsOptional()
+  @IsNumber()
   offset?: number;
+
+  @IsOptional()
+  @IsNumber()
+  limit?: number;
 }

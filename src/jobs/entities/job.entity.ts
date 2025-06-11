@@ -1,7 +1,10 @@
+import { User } from 'src/users/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -34,6 +37,10 @@ export class Job {
 
   @Column({ nullable: true })
   experienceLevel!: string; // e.g., 'Entry', 'Mid', 'Senior'
+
+  @ManyToOne(() => User, (user) => user.jobs, { eager: false })
+  @JoinColumn({ name: 'createdById' })
+  createdBy!: User;
 
   @CreateDateColumn()
   createdAt!: Date;

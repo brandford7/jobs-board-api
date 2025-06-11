@@ -1,24 +1,53 @@
 /* eslint-disable prettier/prettier */
-import { IsInt, IsOptional, IsString } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsBoolean,
+  IsIn,
+  IsDateString,
+  IsNumber,
+} from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UserQueryDTO {
-  @IsString()
   @IsOptional()
+  @IsString()
   search?: string;
 
+  @IsOptional()
+  @IsIn(['candidate', 'recruiter', 'admin'])
+  role?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  isAdmin?: boolean;
+
+  @IsOptional()
   @IsString()
-  @IsOptional()
-  status?: string;
+  email?: string;
 
+  @IsOptional()
+  @IsDateString()
+  createdAfter?: string;
+
+  @IsOptional()
+  @IsDateString()
+  createdBefore?: string;
+
+  @IsOptional()
   @IsString()
-  @IsOptional()
-  sort?: string;
+  sortBy?: string;
 
-  @IsInt()
   @IsOptional()
-  limit?: number;
+  @IsIn(['ASC', 'DESC'])
+  order?: 'ASC' | 'DESC';
 
-  @IsInt()
   @IsOptional()
+  @Transform(({ value }) => parseInt(value))
   offset?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value))
+  limit?: number;
 }

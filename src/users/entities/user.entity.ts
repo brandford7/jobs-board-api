@@ -1,9 +1,11 @@
+import { Job } from 'src/jobs/entities/job.entity';
 import {
   Column,
   Entity,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 
 @Entity('users')
@@ -15,16 +17,16 @@ export class User {
   keycloakId!: string;
 
   @Column({ nullable: true })
-  firstname!: string;
+  firstname?: string;
 
   @Column({ nullable: true })
-  lastname!: string;
+  lastname?: string;
 
   @Column({ unique: true })
-  username!: string;
+  username?: string;
 
   @Column({ unique: true })
-  email!: string;
+  email?: string;
 
   @Column({ default: false })
   isAdmin!: boolean;
@@ -35,6 +37,9 @@ export class User {
     default: 'candidate',
   })
   role!: 'candidate' | 'recruiter' | 'admin';
+
+  @OneToMany(() => Job, (job) => job.createdBy)
+  jobs!: Job[];
 
   @CreateDateColumn()
   createdAt!: Date;
