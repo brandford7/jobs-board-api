@@ -115,7 +115,7 @@ export class JobsService {
     return await this.jobRepo.save(job);
   }
 
-  async remove(id: string /*user: KeycloakUser*/): Promise<string> {
+  async remove(id: string): Promise<string> {
     const job = await this.jobRepo.findOne({
       where: { id },
       relations: ['createdBy'],
