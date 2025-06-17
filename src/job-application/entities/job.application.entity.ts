@@ -6,9 +6,11 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   CreateDateColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity()
+@Unique(['job', 'applicant'])
 export class JobApplication {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

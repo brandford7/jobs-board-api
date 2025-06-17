@@ -23,6 +23,7 @@ export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Post()
+  @Roles({ roles: ['realm:admin', 'realm:recruiter'] })
   create(
     @Body() createJobDto: CreateJobDto,
     @AuthenticatedUser() user: KeycloakUser,
