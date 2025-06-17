@@ -1,0 +1,30 @@
+/* eslint-disable prettier/prettier */
+import { Job } from 'src/jobs/entities/job.entity';
+import { User } from 'src/users/entities/user.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  CreateDateColumn,
+} from 'typeorm';
+
+@Entity()
+export class JobApplication {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
+  @ManyToOne(() => User, (user) => user.applications, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
+  applicant!: User;
+
+  @ManyToOne(() => Job, (job) => job.applications, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
+  job!: Job;
+
+  @CreateDateColumn()
+  appliedAt!: Date;
+}

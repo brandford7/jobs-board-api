@@ -13,23 +13,32 @@ import {
   RoleGuard,
 } from 'nest-keycloak-connect';
 import { APP_GUARD } from '@nestjs/core';
+import { JobApplicationModule } from './job-application/job-application.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+/*import { User } from './users/entities/user.entity';
+import { Job } from './jobs/entities/job.entity';
+import { JobApplication } from './job-application/entities/job.application.entity'; */
+import { dataSourceOptions } from './config/app-data-source';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: Number(process.env.DB_PORT),
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_NAME || 'jobsdb',
-      autoLoadEntities: true,
-      synchronize: true,
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRoot(dataSourceOptions),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 30000,
+          limit: 5,
+        },
+      ],
     }),
+
     UsersModule,
     AuthModule,
     KeycloakConnectModule.register(keycloakConfig),
     JobsModule,
+    JobApplicationModule,
   ],
   controllers: [AppController],
   providers: [
@@ -45,6 +54,11 @@ import { APP_GUARD } from '@nestjs/core';
     {
       provide: APP_GUARD,
       useClass: RoleGuard,
+    },
+
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

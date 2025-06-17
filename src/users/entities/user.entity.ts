@@ -1,3 +1,4 @@
+import { JobApplication } from 'src/job-application/entities/job.application.entity';
 import { Job } from 'src/jobs/entities/job.entity';
 import {
   Column,
@@ -8,7 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 
-@Entity('users')
+@Entity('user')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -40,6 +41,9 @@ export class User {
 
   @OneToMany(() => Job, (job) => job.createdBy)
   jobs!: Job[];
+
+  @OneToMany(() => JobApplication, (app) => app.applicant)
+  applications!: JobApplication[];
 
   @CreateDateColumn()
   createdAt!: Date;
