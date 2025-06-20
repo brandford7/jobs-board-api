@@ -90,19 +90,13 @@ export class JobApplicationService {
     return jobs;
   }
 
-  /*
-  update(id: number, updateJobApplicationDto: UpdateJobApplicationDto) {
-    return `This action updates a #${id} jobApplication`;
-  }
-  */
-
   async cancelApplication(userId: string, appId: string) {
     const app = await this.jobAppRepo.findOne({
       where: { id: appId },
       relations: ['applicant'],
     });
 
-    if (!app || app.applicant.id !== userId)
+    if (!app || app.applicant.keycloakId !== userId)
       throw new NotFoundException('Application not found or not yours');
 
     await this.jobAppRepo.remove(app);
